@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AlbertVilhelm.xyz</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <canvas id="particle-canvas"></canvas>
+
+    <div class="space-container">
+        <div class="floating-text line1">
+            maxalbert03@gmail.com
+        </div>
+        <div class="floating-text line2">
+            +46793483433
+        </div>
+    </div>
+
+    <script>
+        // --- Wait for the HTML document to be fully loaded before running the script ---
+        document.addEventListener('DOMContentLoaded', (event) => {
+
+            // --- Interactive Perspective Logic (Unchanged) ---
+            const container = document.querySelector('.space-container');
+            const body = document.body;
+
+            if (!body) { console.error("Error: document.body is still null!"); return; }
+            if (!container) { console.error("Error: Could not find .space-container element!"); return; }
+
+            const maxShift = 20;
+            body.addEventListener('mousemove', (event) => {
+                const windowWidth = window.innerWidth;
+                const windowHeight = window.innerHeight;
+                const mouseX = event.clientX;
+                const mouseY = event.clientY;
+                const xFraction = (mouseX / windowWidth) - 0.5;
+                const yFraction = (mouseY / windowHeight) - 0.5;
+                const perspectiveX = xFraction * maxShift * 1.5;
+                const perspectiveY = yFraction * maxShift * -1;
+                container.style.setProperty('--mouse-x', perspectiveX);
+                container.style.setProperty('--mouse-y', perspectiveY);
+            });
+            body.addEventListener('mouseleave', () => {
+                 container.style.setProperty('--mouse-x', 0);
+                 container.style.setProperty('--mouse-y', 0);
+            });
+
+            // --- Particle Canvas Logic ---
+            const canvas = document.getElementById('particle-canvas');
+            if (!canvas) {
+                console.error("Error: Could not find #particle-canvas element!");
+                return;
+            }
+            const ctx = canvas.getContext('2d');
+            let particles = [];
+            let mouse = { x: null, y: null, radius: 60 };
+
+            // --- Color cycle setup (matches CSS animation) ---
+            const colors = [
+                { r: 0, g: 198, b: 255 },   // Blue #00c6ff
+                { r: 57, g: 255, b: 20 },   // Neon Green #39ff14
+                { r: 255, g: 27, b: 141 },  // Hot Pink #ff1b8d
+                { r: 255, g: 240, b: 31 },  // Bright Yellow #fff01f
+                { r: 0, g: 198, b: 255 }    // Back to Blue #00c6ff
+            ];
+            const colorCycleDuration = 15; // seconds (matches CSS)
+            let cycleStartTime = performance.now();
+
+            // Function to get the current interpolated color
+            function getCurrentCycleColor(opacity = 1) {
+                const elapsedTime = (performance.now() - cycleStartTime) / 1000;
+                const cycleTime = elapsedTime % colorCycleDuration;
+                const segmentDuration = colorCycleDuration / (colors.length - 1);
+                const segmentIndex = Math.floor(cycleTime / segmentDuration);
+                const timeInSegment = cycleTime % segmentDuration;
+                const progressInSegment = timeInSegment / segmentDuration;
+
+                const startColor = colors[segmentIndex];
+                const endColor = colors[segmentIndex + 1];
+
+                // Linear interpolation between colors
+                const r = Math.round(startColor.r + (endColor.r - startColor.r) * progressInSegment);
+                const g = Math.round(startColor.g + (endColor.g - startColor.g) * progressInSegment);
+                const b = Math.round(startColor.b + (endColor.b - startColor.b) * progressInSegment);
+
+                return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+            }
+
+
+            // Set canvas size
+            function resizeCanvas() {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            }
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+
+            // Update mouse coordinates
+            window.addEventListener('mousemove', (event) => { mouse.x = event.clientX; mouse.y = event.clientY; });
+            window.addEventListener('mouseout', () => { mouse.x = null; mouse.y = null; });
+
+            // Particle class
+            class Particle {
+                constructor(x, y) {
+                    this.x = x;
+                    this.y = y;
+                    this.size = Math.random() * 1.5 + 0.5; // Smaller particles
+                    this.baseX = this.x;
+                    this.baseY = this.y;
+                    this.density = (Math.random() * 30) + 1; // How much it reacts to mouse
+                    // Color will be set dynamically in draw
+                }
+
+                draw(currentColor) {
+                    // --- Set fill and shadow color based on current cycle color ---
+                    ctx.fillStyle = currentColor;
+                    ctx.shadowColor = currentColor;
+                    ctx.shadowBlur = 5; // Adjust glow size
+
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                    ctx.closePath();
+                    ctx.fill();
+                }
+
+                update() {
+                    // --- Declare distance variable ---
+                    let distance;
+                    let dx = mouse.x - this.x;
+                    let dy = mouse.y - this.y;
+
+                    // Check if mouse coordinates are valid before calculating distance
+                    if (mouse.x === null || mouse.y === null) {
+                        distance = Infinity; // Treat as infinitely far if mouse is out
+                    } else {
+                         distance = Math.sqrt(dx * dx + dy * dy);
+                    }
+
+                    let forceDirectionX = dx / distance;
+                    let forceDirectionY = dy / distance;
+                    let maxDistance = mouse.radius;
+                    let force = (maxDistance - distance) / maxDistance;
+                    // Ensure force isn't negative and handle infinite distance
+                    if (force < 0 || !isFinite(distance)) {
+                         force = 0;
+                    }
+
+
+                    let directionX = (forceDirectionX * force * this.density);
+                    let directionY = (forceDirectionY * force * this.density);
+
+                    // Check distance again before applying movement
+                    if (isFinite(distance) && distance < mouse.radius) {
+                        this.x -= directionX * 0.5;
+                        this.y -= directionY * 0.5;
+                    } else {
+                        // Return to base position logic (Unchanged)
+                        if (this.x !== this.baseX) {
+                            let dxReturn = this.x - this.baseX;
+                            this.x -= dxReturn / 20;
+                        }
+                        if (this.y !== this.baseY) {
+                            let dyReturn = this.y - this.baseY;
+                            this.y -= dyReturn / 20;
+                        }
+                    }
+                }
+            }
+
+            // Initialize particles
+            function initParticles() {
+                particles = [];
+                // --- Increased particle density (denominator changed from 9000 to 3000) ---
+                let numberOfParticles = (canvas.width * canvas.height) / 3000;
+                if (numberOfParticles > 450) numberOfParticles = 450; // Increased Max particles
+                for (let i = 0; i < numberOfParticles; i++) {
+                    let x = Math.random() * canvas.width;
+                    let y = Math.random() * canvas.height;
+                    particles.push(new Particle(x, y));
+                }
+            }
+            initParticles();
+            // Re-initialize if canvas size changes significantly
+            window.addEventListener('resize', () => {
+                resizeCanvas();
+                initParticles(); // Recreate particles for new size
+            });
+
+
+            // Animation loop
+            function animateParticles() {
+                // --- Clear the entire canvas completely each frame ---
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                // Removed the semi-transparent fillRect which caused trails
+
+                // --- Get the current color for this frame ---
+                const currentFrameColor = getCurrentCycleColor(0.8); // Get base color with some opacity
+                const currentFrameColorOpaque = getCurrentCycleColor(1); // For shadow
+
+                // --- Reset shadow before drawing particles ---
+                ctx.shadowBlur = 0; // Important to reset shadow before setting new one
+
+                for (let i = 0; i < particles.length; i++) {
+                    particles[i].update();
+                    // --- Pass the calculated color to the draw method ---
+                    particles[i].draw(currentFrameColor);
+                }
+
+                // --- Reset shadow after drawing all particles ---
+                ctx.shadowBlur = 0;
+
+                requestAnimationFrame(animateParticles);
+            }
+            animateParticles();
+
+        }); // --- End of DOMContentLoaded listener ---
+
+    </script>
+</body>
+</html>
+

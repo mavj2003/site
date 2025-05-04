@@ -1,0 +1,165 @@
+/* Apply styles to the whole page body */
+body, html {
+    height: 100%; /* Ensure html and body take full height */
+    margin: 0;
+    padding: 0;
+    overflow: hidden; /* Hide scrollbars caused by elements moving outside */
+    /* display: flex; */ /* Removed flex centering on body to allow canvas full control */
+    /* justify-content: center; */
+    /* align-items: center; */
+}
+
+body {
+    /* --- BACKGROUND IMAGE --- */
+    background-image: url('../images/BILD1.jpg');
+    background-position: center center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    background-size: contain;
+    background-color: #000000; /* Black background */
+    position: relative; /* Needed for absolute positioning of canvas */
+}
+
+/* --- NEW: Style for the particle canvas --- */
+#particle-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0; /* Place canvas behind other content */
+    display: block; /* Remove extra space below canvas */
+}
+
+
+/* Container to establish the 3D perspective */
+/* --- Adjusted positioning to center it since body is no longer flex --- */
+.space-container {
+    width: 90vw;
+    height: 90vh;
+    perspective: 800px;
+    perspective-origin: calc(50% + var(--mouse-x, 0) * 1px) calc(50% + var(--mouse-y, 0) * 1px);
+    position: absolute; /* Changed from relative to absolute */
+    top: 50%;          /* Center vertically */
+    left: 50%;         /* Center horizontally */
+    transform: translate(-50%, -50%); /* Fine-tune centering */
+    transform-style: preserve-3d;
+    transition: perspective-origin 0.15s linear;
+    z-index: 1; /* Ensure text container is above canvas */
+}
+
+/* --- Styling RE-APPLIED to individual text elements --- */
+.floating-text {
+    position: absolute; /* Position absolutely within the container */
+    top: 50%;
+    left: 50%;
+    transform-style: preserve-3d;
+    font-family: 'Times New Roman', Times, serif;
+    font-weight: bold;
+    font-style: italic;
+    white-space: nowrap;
+    /* Base animations applied here */
+    /* Note: movement animation is overridden by specific line styles below */
+    animation-name: changeColor, pulseGlow;
+    animation-duration: 15s, 3s;
+    animation-timing-function: linear, ease-in-out;
+    animation-iteration-count: infinite, infinite;
+    animation-direction: normal, alternate;
+}
+
+/* Specific styles and animations for line 1 (email) */
+.floating-text.line1 {
+    font-size: 0.8vw; /* Smaller font size */
+    /* Add the specific movement animation */
+    animation-name: changeColor, pulseGlow, floatInSpace1; /* Override base */
+    animation-duration: 15s, 3s, 22s;
+    animation-timing-function: linear, ease-in-out, ease-in-out;
+    animation-iteration-count: infinite, infinite, infinite;
+    animation-direction: normal, alternate, alternate;
+    /* No delays needed */
+    animation-delay: 0s, 0s, 0s;
+    /* Initial position */
+    transform: translate3d(-50%, -50%, -80px) rotateY(10deg);
+}
+
+/* Specific styles and animations for line 2 (phone) */
+.floating-text.line2 {
+    font-size: 0.65vw; /* Even smaller font size */
+    /* Add the specific movement animation */
+     animation-name: changeColor, pulseGlow, floatInSpace2; /* Override base */
+    animation-duration: 15s, 3s, 25s;
+    animation-timing-function: linear, ease-in-out, ease-in-out;
+    animation-iteration-count: infinite, infinite, infinite;
+    animation-direction: normal, alternate, alternate;
+    /* --- Apply delay ONLY to the movement animation (floatInSpace2) --- */
+    animation-delay: 0s, 0s, -5s;
+     /* Initial position - different starting point */
+    transform: translate3d(-50%, -50%, 80px) rotateY(-15deg);
+}
+
+
+/* --- Define the FIRST floating animation (for email) - Adjusted path (MUCH Higher Y) --- */
+@keyframes floatInSpace1 {
+    0% {
+        /* Start back-left, much higher up */
+        transform: translate3d(-60%, -95%, -80px) rotateX(5deg) rotateY(15deg); /* Y was -75% */
+    }
+    50% {
+        /* Move forward-right, stay high */
+        transform: translate3d(-40%, -90%, 120px) rotateX(-10deg) rotateY(-25deg); /* Y was -70% */
+    }
+    100% {
+        /* Move back-center, much higher up */
+        transform: translate3d(-50%, -100%, -60px) rotateX(10deg) rotateY(5deg); /* Y was -80% */
+    }
+}
+
+/* --- Define the SECOND floating animation (for phone) - Adjusted path (MUCH Lower Y) --- */
+@keyframes floatInSpace2 {
+    0% {
+        /* Start forward-right, much lower down */
+        transform: translate3d(-40%, -5%, 80px) rotateX(-5deg) rotateY(-10deg); /* Y was -25% */
+    }
+    50% {
+        /* Move back-left, stay low */
+        transform: translate3d(-60%, 0%, -100px) rotateX(15deg) rotateY(30deg); /* Y was -30% */
+    }
+    100% {
+        /* Move forward-center, much lower down */
+        transform: translate3d(-50%, 5%, 60px) rotateX(-5deg) rotateY(-5deg); /* Y was -20% */
+    }
+}
+
+
+/* Define the color changing animation (Unchanged) */
+@keyframes changeColor {
+    0%   { color: #00c6ff; } /* Start Blue */
+    25%  { color: #39ff14; } /* Neon Green */
+    50%  { color: #ff1b8d; } /* Hot Pink */
+    75%  { color: #fff01f; } /* Bright Yellow */
+    100% { color: #00c6ff; } /* Back to Blue */
+}
+
+/* Define the glow pulsing animation (Unchanged) */
+@keyframes pulseGlow {
+    from {
+        text-shadow: 0 0 3px #ffffff, 0 0 6px currentColor, 0 0 9px currentColor;
+    }
+    to {
+        text-shadow: 0 0 5px #ffffff, 0 0 10px currentColor, 0 0 15px currentColor, 0 0 20px currentColor;
+    }
+}
+
+
+/* Media query for smaller screens - adjust reduced sizes */
+@media (max-width: 768px) {
+    .floating-text.line1 { font-size: 1.5vw; }
+    .floating-text.line2 { font-size: 1.2vw; }
+    .space-container { perspective: 600px; }
+}
+
+@media (max-width: 480px) {
+    .floating-text.line1 { font-size: 2vw; }
+    .floating-text.line2 { font-size: 1.6vw; }
+    .space-container { perspective: 500px; }
+}
