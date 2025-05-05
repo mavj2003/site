@@ -6,16 +6,20 @@
     <title>Albert Vilhelm - Fotogalleri</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        .modal{transition:opacity .25s ease}body.modal-open{overflow:hidden}.modal-img{max-height:90vh;max-width:90vw;display:block;margin:auto}.modal-date{position:absolute;bottom:1rem;left:50%;transform:translateX(-50%);background-color:rgba(0,0,0,.6);color:#e2e8f0;padding:.25rem .75rem;border-radius:.25rem;font-size:.9rem;pointer-events:none}body{font-family:'Times New Roman',Times,serif;font-style:italic}.photo-entry img{transition:transform .2s ease-in-out}
+        .modal{transition:opacity .25s ease}body.modal-open{overflow:hidden}.modal-img{max-height:90vh;max-width:90vw;display:block;margin:auto}.modal-date{position:absolute;bottom:1rem;left:50%;transform:translateX(-50%);background-color:rgba(0,0,0,.6);color:#e2e8f0;padding:.25rem .75rem;border-radius:.25rem;font-size:.9rem;pointer-events:none}body{font-family:'Times New Roman',Times,serif;font-style:italic}
+        .photo-entry img{transition:transform .2s ease-in-out}
+        .photo-entry { background-color: #000; }
     </style>
 </head>
 <body class="bg-black text-gray-300">
     <div class="container mx-auto px-4 py-8">
-        <h1 class="text-3xl text-center text-white mb-8">Mitt fotoalbum;</h1>
-        <div id="gallery" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+        <h1 class="text-3xl text-center text-white mb-8">2003 – ∞</h1>
+        <div id="gallery" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-0">
             {% for image in images %}
-            <div class="photo-entry group cursor-pointer overflow-hidden relative" data-date="{{ image.date }}">
-                <img src="{{ url_for('static', filename='images/' + image.filename) }}" alt="" class="w-full h-16 object-cover block group-hover:scale-125" data-fullsrc="{{ url_for('static', filename='images/' + image.filename) }}">
+            <div class="photo-entry group cursor-pointer overflow-hidden relative bg-black hover:overflow-visible hover:z-10" data-date="{{ image.date }}">
+                <img src="{{ url_for('static', filename='images/' + image.filename) }}" alt=""
+                     class="w-full h-40 object-contain block group-hover:scale-125"
+                     data-fullsrc="{{ url_for('static', filename='images/' + image.filename) }}">
             </div>
             {% else %}
             <p class="col-span-full text-center text-gray-500">Inga bilder hittades i galleriet.</p>

@@ -1,6 +1,6 @@
 import os
 from flask import Flask, render_template
-import re # Import regular expressions for sorting
+import re
 
 app = Flask(__name__, static_folder='static', template_folder='templates')
 IMAGE_FOLDER = os.path.join(app.static_folder, 'images')
@@ -16,11 +16,8 @@ def gallery():
     image_files = []
     try:
         all_files = os.listdir(IMAGE_FOLDER)
-        valid_files = sorted(
-            [f for f in all_files if os.path.splitext(f)[1].lower() in ALLOWED_EXTENSIONS],
-            key=sort_key_natural,
-            reverse=True
-        )
+        valid_files = [f for f in all_files if os.path.splitext(f)[1].lower() in ALLOWED_EXTENSIONS]
+        valid_files.sort(key=sort_key_natural, reverse=True)
         for filename in valid_files:
             date_str = os.path.splitext(filename)[0]
             image_files.append({'filename': filename, 'date': date_str})
@@ -30,5 +27,5 @@ def gallery():
         print(f"An error occurred: {e}")
     return render_template('index.html', images=image_files)
 
-# if __name__ == '__main__':
-#     app.run(debug=True, port=5000)
+if __name__ == '__main__':
+    app.run(debug=True, port=5000)
