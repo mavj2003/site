@@ -10,21 +10,29 @@
             --bg-color: #000000;
             --text-color: #cbd5e1;
             --heading-color: #ffffff;
-            --entry-bg-color: #000000; /* Svart bakgrund i mörkt läge */
+            --entry-bg-color: #000000;
             --modal-bg-color: rgba(0, 0, 0, 0.8);
             --modal-overlay-bg: rgba(0, 0, 0, 0.6);
             --modal-overlay-text: #e2e8f0;
             --button-text: #ffffff;
+            /* 3D Text Shadow Colors */
+            --shadow-color-1: rgba(0, 198, 255, 0.6); /* Blueish */
+            --shadow-color-2: rgba(57, 255, 20, 0.4);  /* Greenish */
+            --shadow-color-3: rgba(255, 27, 141, 0.2); /* Pinkish */
         }
         .light-mode {
             --bg-color: #f1f5f9;
             --text-color: #1e293b;
             --heading-color: #000000;
-            --entry-bg-color: #f1f5f9; /* Samma som sidans bakgrund i ljust läge */
+            --entry-bg-color: #f1f5f9;
             --modal-bg-color: rgba(255, 255, 255, 0.8);
             --modal-overlay-bg: rgba(255, 255, 255, 0.6);
             --modal-overlay-text: #1e293b;
             --button-text: #1e293b;
+             /* 3D Text Shadow Colors - Light Mode */
+            --shadow-color-1: rgba(0, 0, 0, 0.3);
+            --shadow-color-2: rgba(0, 0, 0, 0.2);
+            --shadow-color-3: rgba(0, 0, 0, 0.1);
         }
         body {
             background-color: var(--bg-color);
@@ -49,10 +57,39 @@
             pointer-events:none;
             z-index: 60;
         }
-        .photo-entry img{transition:transform .2s ease-in-out}
-        /* Använder CSS-variabel för bakgrundsfärg */
+        /* Transition för filter (grayscale) */
+        .photo-entry img{transition: filter 0.3s ease-in-out;}
+        /* Gråskaleeffekt vid hover */
+        .photo-entry:hover img {
+            filter: grayscale(100%);
+        }
         .photo-entry { background-color: var(--entry-bg-color); transition: background-color 0.3s ease; }
-        h1 { color: var(--heading-color); transition: color 0.3s ease;}
+
+        /* H1 Styling */
+        h1 {
+            color: var(--heading-color);
+            transition: color 0.3s ease, transform 0.3s ease, text-shadow 0.3s ease;
+            display: inline-block;
+            cursor: pointer;
+            /* Grundläggande 3D-skugga */
+            text-shadow:
+                1px 1px 0 var(--shadow-color-1),
+                2px 2px 0 var(--shadow-color-2),
+                3px 3px 0 var(--shadow-color-3);
+        }
+        /* Hover effect for H1 */
+        h1:hover {
+            transform: scale(1.15);
+             /* Förstärkt 3D-skugga vid hover */
+            text-shadow:
+                1px 1px 0 var(--shadow-color-1),
+                2px 2px 0 var(--shadow-color-1),
+                3px 3px 0 var(--shadow-color-2),
+                4px 4px 0 var(--shadow-color-2),
+                5px 5px 0 var(--shadow-color-3),
+                6px 6px 0 var(--shadow-color-3);
+        }
+
         #closeModal, #themeToggle { color: var(--button-text); }
 
         .slideshow-btn {
@@ -87,6 +124,7 @@
              z-index: 60;
         }
          #downloadBtn:hover { background-color: rgba(0, 0, 0, 0.7); }
+
     </style>
 </head>
 <body class="text-gray-300">
@@ -96,12 +134,14 @@
     </button>
 
     <div class="container mx-auto px-4 py-8">
-        <h1 class="text-3xl text-center mb-8">2003 – ∞</h1>
+        <div class="text-center mb-8">
+            <h1 class="text-3xl inline-block">albertvilhelm.xyz</h1>
+        </div>
         <div id="gallery" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-0">
             {% for image in images %}
-            <div class="photo-entry group cursor-pointer overflow-hidden relative hover:overflow-visible hover:z-10" data-date="{{ image.date }}" data-filename="{{ image.filename }}">
+            <div class="photo-entry cursor-pointer overflow-hidden relative" data-date="{{ image.date }}" data-filename="{{ image.filename }}">
                 <img src="{{ url_for('static', filename='images/' + image.filename) }}" alt=""
-                     class="w-full h-40 object-contain block group-hover:scale-125"
+                     class="w-full h-64 object-cover block"
                      data-fullsrc="{{ url_for('static', filename='images/' + image.filename) }}">
             </div>
             {% else %}
@@ -171,6 +211,10 @@
                 if (index < 0 || index >= galleryImages.length) { return; }
                 currentImageIndex = index;
                 const imageData = galleryImages[index];
+                if (!imageData || !imageData.filename) {
+                    console.error("Invalid image data for index:", index, imageData);
+                    return;
+                }
                 const imageUrl = "{{ url_for('static', filename='images/') }}" + imageData.filename;
                 modalImage.src = imageUrl;
                 modalDateDisplay.textContent = imageData.date || "";
@@ -185,13 +229,20 @@
             gallery.addEventListener('click', event => {
                 const entry = event.target.closest('.photo-entry');
                 if (entry) {
-                    const filename = entry.querySelector('img')?.dataset?.fullsrc?.split('/').pop();
+                    const filename = entry.dataset.filename;
+                    if (!filename) {
+                        console.error("Clicked entry is missing data-filename attribute:", entry);
+                        return;
+                    }
                     const index = galleryImages.findIndex(img => img.filename === filename);
+
                     if (index !== -1) {
                         showImage(index);
                         modal.classList.remove('opacity-0');
                         modal.classList.remove('pointer-events-none');
                         document.body.classList.add('modal-open');
+                    } else {
+                         console.error("Could not find image index for filename:", filename);
                     }
                 }
             });

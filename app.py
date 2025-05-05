@@ -1,5 +1,5 @@
 import os
-from flask import Flask, render_template, jsonify # Added jsonify
+from flask import Flask, render_template, jsonify
 import re
 
 app = Flask(__name__, static_folder='static', template_folder='templates')
@@ -12,12 +12,12 @@ def sort_key_natural(filename):
     return [int(part) if part.isdigit() else part.lower() for part in parts]
 
 def get_gallery_images():
-    # Helper function to get sorted image data
     image_data = []
     try:
         all_files = os.listdir(IMAGE_FOLDER)
         valid_files = [f for f in all_files if os.path.splitext(f)[1].lower() in ALLOWED_EXTENSIONS]
-        valid_files.sort(key=sort_key_natural, reverse=False) # Oldest first
+        # Ändrat till reverse=True för att sortera SENAST först
+        valid_files.sort(key=sort_key_natural, reverse=True)
         for filename in valid_files:
             date_str = os.path.splitext(filename)[0]
             image_data.append({'filename': filename, 'date': date_str})
@@ -29,17 +29,14 @@ def get_gallery_images():
 
 @app.route('/')
 def gallery_page():
-    # Renders the main HTML page
     images_list = get_gallery_images()
     return render_template('index.html', images=images_list)
 
-# Optional: An endpoint to get image data as JSON for JavaScript
-# This isn't strictly necessary for the current JS but can be useful
 @app.route('/api/images')
 def gallery_api():
     images_list = get_gallery_images()
     return jsonify(images_list)
 
-# Comment out/remove for deployment
-# if __name__ == '__main__':
-#     app.run(debug=True, port=5000)
+# Kommentera ut/ta bort raderna nedan för deployment till Render
+if __name__ == '__main__':
+     app.run(debug=True, port=5000)
