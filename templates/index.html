@@ -6,10 +6,9 @@
     <title>Albert Vilhelm - Fotogalleri</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Grundläggande mörkt tema (CSS-variabler) */
         :root {
             --bg-color: #000000;
-            --text-color: #cbd5e1; /* gray-300 */
+            --text-color: #cbd5e1;
             --heading-color: #ffffff;
             --entry-bg-color: #000000;
             --modal-bg-color: rgba(0, 0, 0, 0.8);
@@ -17,33 +16,78 @@
             --modal-date-text: #e2e8f0;
             --button-text: #ffffff;
         }
-        /* Ljust tema */
         .light-mode {
-            --bg-color: #f1f5f9; /* gray-100 */
-            --text-color: #1e293b; /* gray-800 */
+            --bg-color: #f1f5f9;
+            --text-color: #1e293b;
             --heading-color: #000000;
-            --entry-bg-color: #f8fafc; /* gray-50 */
+            --entry-bg-color: #f8fafc;
             --modal-bg-color: rgba(255, 255, 255, 0.8);
             --modal-date-bg: rgba(255, 255, 255, 0.6);
             --modal-date-text: #1e293b;
             --button-text: #1e293b;
         }
-
         body {
             background-color: var(--bg-color);
             color: var(--text-color);
             font-family: 'Times New Roman', Times, serif;
             font-style: italic;
-            transition: background-color 0.3s ease, color 0.3s ease; /* Mjuk övergång */
+            transition: background-color 0.3s ease, color 0.3s ease;
         }
         .modal{transition:opacity .25s ease; background-color: var(--modal-bg-color);}
         body.modal-open{overflow:hidden}
-        .modal-img{max-height:90vh;max-width:90vw;display:block;margin:auto}
-        .modal-date{position:absolute;bottom:1rem;left:50%;transform:translateX(-50%);background-color:var(--modal-date-bg);color:var(--modal-date-text);padding:.25rem .75rem;border-radius:.25rem;font-size:.9rem;pointer-events:none}
+        .modal-img{max-height:85vh;max-width:90vw;display:block;margin:auto}
+        .modal-date{
+            position:absolute;
+            bottom: 3rem; /* Flyttat upp lite (var 1rem) */
+            left:50%;
+            transform:translateX(-50%);
+            background-color:var(--modal-date-bg);
+            color:var(--modal-date-text);
+            padding:.25rem .75rem;
+            border-radius:.25rem;
+            font-size:.9rem;
+            pointer-events:none;
+            z-index: 60; /* Säkerställ att den är ovanpå bilden */
+        }
         .photo-entry img{transition:transform .2s ease-in-out}
         .photo-entry { background-color: var(--entry-bg-color); transition: background-color 0.3s ease; }
         h1 { color: var(--heading-color); transition: color 0.3s ease;}
         #closeModal, #themeToggle { color: var(--button-text); }
+
+        /* Justerade stilar för bildspelsknappar */
+        .slideshow-btn {
+            position: fixed; /* Positionera relativt viewporten */
+            top: 50%;
+            transform: translateY(-50%);
+            background-color: rgba(0, 0, 0, 0.4);
+            color: white;
+            border: none;
+            font-size: 2.5rem; /* Lite större */
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            border-radius: 0.3rem;
+            transition: background-color 0.2s ease;
+            z-index: 70; /* Högst upp (ovanför modal-bakgrund) */
+        }
+        .slideshow-btn:hover { background-color: rgba(0, 0, 0, 0.7); }
+        #prevBtn { left: 2rem; } /* Lite mer indrag från kanten */
+        #nextBtn { right: 2rem; } /* Lite mer indrag från kanten */
+
+        /* Justerad stil för nedladdningsknapp */
+        #downloadBtn {
+            position: absolute;
+            bottom: 1rem;
+            right: 1rem; /* Placerad i nedre högra hörnet */
+            background-color: rgba(0, 0, 0, 0.4);
+            color: white;
+            padding: 0.4rem 0.8rem;
+            border-radius: 0.3rem;
+            font-size: 0.8rem;
+            text-decoration: none;
+            transition: background-color 0.2s ease;
+             z-index: 60; /* Ovanpå bilden */
+        }
+         #downloadBtn:hover { background-color: rgba(0, 0, 0, 0.7); }
     </style>
 </head>
 <body class="text-gray-300">
@@ -53,12 +97,13 @@
     </button>
 
     <div class="container mx-auto px-4 py-8">
-        <h1 class="text-3xl text-center mb-8">albertvilhelm.xyz</h1>
+        <h1 class="text-3xl text-center mb-8">2003 – ∞</h1>
         <div id="gallery" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-0">
             {% for image in images %}
-            <div class="photo-entry group cursor-pointer overflow-hidden relative hover:overflow-visible hover:z-10" data-date="{{ image.date }}">
+            <div class="photo-entry group cursor-pointer overflow-hidden relative bg-black hover:overflow-visible hover:z-10" data-date="{{ image.date }}" data-filename="{{ image.filename }}">
                 <img src="{{ url_for('static', filename='images/' + image.filename) }}" alt=""
-                     class="w-full h-40 object-contain block group-hover:scale-125" data-fullsrc="{{ url_for('static', filename='images/' + image.filename) }}">
+                     class="w-full h-40 object-contain block group-hover:scale-125"
+                     data-fullsrc="{{ url_for('static', filename='images/' + image.filename) }}">
             </div>
             {% else %}
             <p class="col-span-full text-center text-gray-500">Inga bilder hittades i galleriet.</p>
@@ -69,8 +114,10 @@
         <div class="relative">
              <img id="modalImage" src="" alt="Förstorad vy" class="modal-img rounded-lg shadow-2xl object-contain">
              <p id="modalDateDisplay" class="modal-date"></p>
-             <a id="downloadBtn" href="#" download class="hidden">Ladda ner</a> </div>
-        <button id="prevBtn" class="slideshow-btn hidden">&lt;</button> <button id="nextBtn" class="slideshow-btn hidden">&gt;</button>
+             <a id="downloadBtn" href="#" download class="hidden">Ladda ner</a>
+        </div>
+        <button id="prevBtn" class="slideshow-btn hidden">&lt;</button>
+        <button id="nextBtn" class="slideshow-btn hidden">&gt;</button>
         <button id="closeModal" class="absolute top-4 right-4 text-white text-4xl hover:text-gray-400 transition-colors">&times;</button>
     </div>
 
@@ -87,7 +134,6 @@
             const themeToggleBtn = document.getElementById('themeToggle');
             const bodyElement = document.body;
 
-            // --- Theme Toggle Logic ---
             const currentTheme = localStorage.getItem('theme');
             if (currentTheme === 'light') {
                 bodyElement.classList.add('light-mode');
@@ -108,7 +154,6 @@
                 localStorage.setItem('theme', theme);
             });
 
-            // --- Gallery & Modal Logic ---
             const galleryImages = {{ images|tojson }};
             let currentImageIndex = -1;
 
@@ -120,7 +165,7 @@
                 const showButtons = galleryImages.length > 1;
                 prevBtn.classList.toggle('hidden', !showButtons);
                 nextBtn.classList.toggle('hidden', !showButtons);
-                downloadBtn.classList.toggle('hidden', currentImageIndex === -1); // Show download only when image is loaded
+                downloadBtn.classList.toggle('hidden', currentImageIndex === -1);
             }
 
             function showImage(index) {
@@ -132,7 +177,7 @@
                 modalDateDisplay.textContent = imageData.date || "";
                 downloadBtn.href = imageUrl;
                 downloadBtn.download = imageData.filename;
-                updateModalButtonsVisibility(); // Update button visibility
+                updateModalButtonsVisibility();
             }
 
             function showNextImage() { if(galleryImages.length < 2) return; const nextIndex = (currentImageIndex + 1) % galleryImages.length; showImage(nextIndex); }
@@ -141,7 +186,7 @@
             gallery.addEventListener('click', event => {
                 const entry = event.target.closest('.photo-entry');
                 if (entry) {
-                    const filename = entry.querySelector('img')?.dataset?.fullsrc?.split('/').pop(); // Get filename from fullsrc
+                    const filename = entry.querySelector('img')?.dataset?.fullsrc?.split('/').pop();
                     const index = galleryImages.findIndex(img => img.filename === filename);
                     if (index !== -1) {
                         showImage(index);
@@ -158,7 +203,7 @@
                 document.body.classList.remove('modal-open');
                 setTimeout(() => { modalImage.src = ""; modalDateDisplay.textContent = ""; downloadBtn.href = "#"; }, 250);
                 currentImageIndex = -1;
-                updateModalButtonsVisibility(); // Hide buttons when modal closes
+                updateModalButtonsVisibility();
             }
 
             closeModalBtn.addEventListener('click', hideModal);
@@ -173,7 +218,6 @@
                 }
             });
 
-            // Initial check for button visibility
             updateModalButtonsVisibility();
         });
     </script>
