@@ -1,45 +1,167 @@
-import os
-from flask import Flask, render_template, jsonify # Added jsonify
-import re
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Albert Vilhelm - Fotogalleri</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .modal{transition:opacity .25s ease}body.modal-open{overflow:hidden}.modal-img{max-height:85vh;max-width:90vw;display:block;margin:auto} /* Reduced max-height slightly */
+        .modal-date{position:absolute;bottom:1rem;left:50%;transform:translateX(-50%);background-color:rgba(0,0,0,.6);color:#e2e8f0;padding:.25rem .75rem;border-radius:.25rem;font-size:.9rem;pointer-events:none}body{font-family:'Times New Roman',Times,serif;font-style:italic}
+        .photo-entry { background-color: #000; }
+        /* Styles for slideshow buttons */
+        .slideshow-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background-color: rgba(0, 0, 0, 0.4);
+            color: white;
+            border: none;
+            font-size: 2rem;
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            border-radius: 0.3rem;
+            transition: background-color 0.2s ease;
+            z-index: 60; /* Above modal background */
+        }
+        .slideshow-btn:hover { background-color: rgba(0, 0, 0, 0.7); }
+        #prevBtn { left: 1rem; }
+        #nextBtn { right: 1rem; }
+        /* Style for Download button */
+        #downloadBtn {
+            position: absolute;
+            bottom: 1rem;
+            right: 1rem;
+            background-color: rgba(0, 0, 0, 0.4);
+            color: white;
+            padding: 0.4rem 0.8rem;
+            border-radius: 0.3rem;
+            font-size: 0.8rem;
+            text-decoration: none;
+            transition: background-color 0.2s ease;
+             z-index: 60;
+        }
+         #downloadBtn:hover { background-color: rgba(0, 0, 0, 0.7); }
+    </style>
+</head>
+<body class="bg-black text-gray-300">
+    <div class="container mx-auto px-4 py-8">
+        <h1 class="text-3xl text-center text-white mb-8">2003 – ∞</h1>
+        <div id="gallery" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-0">
+            {% for image in images %}
+            <div class="photo-entry cursor-pointer overflow-hidden relative bg-black" data-date="{{ image.date }}" data-filename="{{ image.filename }}">
+                <img src="{{ url_for('static', filename='images/' + image.filename) }}" alt=""
+                     class="w-full h-40 object-contain block"
+                     data-fullsrc="{{ url_for('static', filename='images/' + image.filename) }}">
+            </div>
+            {% else %}
+            <p class="col-span-full text-center text-gray-500">Inga bilder hittades i galleriet.</p>
+            {% endfor %}
+        </div>
+    </div>
+    <div id="imageModal" class="modal fixed inset-0 bg-black bg-opacity-80 flex justify-center items-center p-4 opacity-0 pointer-events-none z-50">
+        <div class="relative">
+             <img id="modalImage" src="" alt="Förstorad vy" class="modal-img rounded-lg shadow-2xl object-contain">
+             <p id="modalDateDisplay" class="modal-date"></p>
+             <a id="downloadBtn" href="#" download>Ladda ner</a>
+        </div>
+        <button id="prevBtn" class="slideshow-btn">&lt;</button>
+        <button id="nextBtn" class="slideshow-btn">&gt;</button>
+        <button id="closeModal" class="absolute top-4 right-4 text-white text-4xl hover:text-gray-400 transition-colors">&times;</button>
+    </div>
 
-app = Flask(__name__, static_folder='static', template_folder='templates')
-IMAGE_FOLDER = os.path.join(app.static_folder, 'images')
-ALLOWED_EXTENSIONS = {'.png', '.jpg', '.jpeg', '.gif', '.webp'}
+    <script>
+        // Store image data passed from Flask/Jinja2
+        const galleryImages = {{ images|tojson }};
+        let currentImageIndex = -1;
 
-def sort_key_natural(filename):
-    name_part = os.path.splitext(filename)[0]
-    parts = re.split('([0-9]+)', name_part)
-    return [int(part) if part.isdigit() else part.lower() for part in parts]
+        document.addEventListener('DOMContentLoaded',()=>{
+            const gallery = document.getElementById('gallery');
+            const modal = document.getElementById('imageModal');
+            const modalImage = document.getElementById('modalImage');
+            const closeModalBtn = document.getElementById('closeModal');
+            const modalDateDisplay = document.getElementById('modalDateDisplay');
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            const downloadBtn = document.getElementById('downloadBtn');
 
-def get_gallery_images():
-    # Helper function to get sorted image data
-    image_data = []
-    try:
-        all_files = os.listdir(IMAGE_FOLDER)
-        valid_files = [f for f in all_files if os.path.splitext(f)[1].lower() in ALLOWED_EXTENSIONS]
-        valid_files.sort(key=sort_key_natural, reverse=False) # Oldest first
-        for filename in valid_files:
-            date_str = os.path.splitext(filename)[0]
-            image_data.append({'filename': filename, 'date': date_str})
-    except FileNotFoundError:
-        print(f"Error: Image folder not found at {IMAGE_FOLDER}")
-    except Exception as e:
-        print(f"An error occurred: {e}")
-    return image_data
+            if (!gallery || !modal || !modalImage || !closeModalBtn || !modalDateDisplay || !prevBtn || !nextBtn || !downloadBtn) {
+                console.error("Gallery or modal elements not found!");
+                return;
+            }
 
-@app.route('/')
-def gallery_page():
-    # Renders the main HTML page
-    images_list = get_gallery_images()
-    return render_template('index.html', images=images_list)
+            // Function to update modal content
+            function showImage(index) {
+                if (index < 0 || index >= galleryImages.length) {
+                    console.error("Invalid image index:", index);
+                    return;
+                }
+                currentImageIndex = index;
+                const imageData = galleryImages[index];
+                const imageUrl = "{{ url_for('static', filename='images/') }}" + imageData.filename;
 
-# Optional: An endpoint to get image data as JSON for JavaScript
-# This isn't strictly necessary for the current JS but can be useful
-@app.route('/api/images')
-def gallery_api():
-    images_list = get_gallery_images()
-    return jsonify(images_list)
+                modalImage.src = imageUrl;
+                modalDateDisplay.textContent = imageData.date || "";
+                downloadBtn.href = imageUrl;
+                // Set suggested download filename (optional, uses original filename)
+                downloadBtn.download = imageData.filename;
+            }
 
-# Comment out/remove for deployment
-# if __name__ == '__main__':
-#     app.run(debug=True, port=5000)
+            // Function to show the next image
+            function showNextImage() {
+                const nextIndex = (currentImageIndex + 1) % galleryImages.length; // Wrap around
+                showImage(nextIndex);
+            }
+
+            // Function to show the previous image
+            function showPreviousImage() {
+                const prevIndex = (currentImageIndex - 1 + galleryImages.length) % galleryImages.length; // Wrap around
+                showImage(prevIndex);
+            }
+
+            // Open modal when clicking an image in the gallery
+            gallery.addEventListener('click', event => {
+                const entry = event.target.closest('.photo-entry');
+                if (entry) {
+                    const filename = entry.dataset.filename;
+                    // Find the index of the clicked image in our data array
+                    const index = galleryImages.findIndex(img => img.filename === filename);
+
+                    if (index !== -1) {
+                        showImage(index); // Show the clicked image
+                        modal.classList.remove('opacity-0');
+                        modal.classList.remove('pointer-events-none');
+                        document.body.classList.add('modal-open');
+                    }
+                }
+            });
+
+            // Function to close the modal
+            function hideModal() {
+                modal.classList.add('opacity-0');
+                modal.classList.add('pointer-events-none');
+                document.body.classList.remove('modal-open');
+                setTimeout(() => {
+                    modalImage.src = "";
+                    modalDateDisplay.textContent = "";
+                    downloadBtn.href = "#"; // Reset download link
+                }, 250);
+                currentImageIndex = -1; // Reset index
+            }
+
+            // Event listeners for buttons and keys
+            closeModalBtn.addEventListener('click', hideModal);
+            prevBtn.addEventListener('click', showPreviousImage);
+            nextBtn.addEventListener('click', showNextImage);
+            modal.addEventListener('click', event => { if (event.target === modal) { hideModal(); } });
+            document.addEventListener('keydown', event => {
+                if (!modal.classList.contains('opacity-0')) { // Only act if modal is open
+                    if (event.key === 'Escape') { hideModal(); }
+                    if (event.key === 'ArrowLeft') { showPreviousImage(); }
+                    if (event.key === 'ArrowRight') { showNextImage(); }
+                }
+            });
+        });
+    </script>
+</body>
+</html>

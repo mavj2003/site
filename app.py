@@ -1,5 +1,5 @@
 import os
-from flask import Flask, render_template
+from flask import Flask, render_template, jsonify # Added jsonify
 import re
 
 app = Flask(__name__, static_folder='static', template_folder='templates')
@@ -11,21 +11,35 @@ def sort_key_natural(filename):
     parts = re.split('([0-9]+)', name_part)
     return [int(part) if part.isdigit() else part.lower() for part in parts]
 
-@app.route('/')
-def gallery():
-    image_files = []
+def get_gallery_images():
+    # Helper function to get sorted image data
+    image_data = []
     try:
         all_files = os.listdir(IMAGE_FOLDER)
         valid_files = [f for f in all_files if os.path.splitext(f)[1].lower() in ALLOWED_EXTENSIONS]
-        valid_files.sort(key=sort_key_natural, reverse=True)
+        valid_files.sort(key=sort_key_natural, reverse=False) # Oldest first
         for filename in valid_files:
             date_str = os.path.splitext(filename)[0]
-            image_files.append({'filename': filename, 'date': date_str})
+            image_data.append({'filename': filename, 'date': date_str})
     except FileNotFoundError:
         print(f"Error: Image folder not found at {IMAGE_FOLDER}")
     except Exception as e:
         print(f"An error occurred: {e}")
-    return render_template('index.html', images=image_files)
+    return image_data
 
-if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+@app.route('/')
+def gallery_page():
+    # Renders the main HTML page
+    images_list = get_gallery_images()
+    return render_template('index.html', images=images_list)
+
+# Optional: An endpoint to get image data as JSON for JavaScript
+# This isn't strictly necessary for the current JS but can be useful
+@app.route('/api/images')
+def gallery_api():
+    images_list = get_gallery_images()
+    return jsonify(images_list)
+
+# Comment out/remove for deployment
+# if __name__ == '__main__':
+#     app.run(debug=True, port=5000)
