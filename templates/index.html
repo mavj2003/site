@@ -6,75 +6,75 @@
     <title>Albert Vilhelm - Fotogalleri</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        .modal{transition:opacity .25s ease}body.modal-open{overflow:hidden}.modal-img{max-height:85vh;max-width:90vw;display:block;margin:auto} /* Reduced max-height slightly */
-        .modal-date{position:absolute;bottom:1rem;left:50%;transform:translateX(-50%);background-color:rgba(0,0,0,.6);color:#e2e8f0;padding:.25rem .75rem;border-radius:.25rem;font-size:.9rem;pointer-events:none}body{font-family:'Times New Roman',Times,serif;font-style:italic}
-        .photo-entry { background-color: #000; }
-        /* Styles for slideshow buttons */
-        .slideshow-btn {
-            position: absolute;
-            top: 50%;
-            transform: translateY(-50%);
-            background-color: rgba(0, 0, 0, 0.4);
-            color: white;
-            border: none;
-            font-size: 2rem;
-            padding: 0.5rem 1rem;
-            cursor: pointer;
-            border-radius: 0.3rem;
-            transition: background-color 0.2s ease;
-            z-index: 60; /* Above modal background */
+        /* Grundläggande mörkt tema (CSS-variabler) */
+        :root {
+            --bg-color: #000000;
+            --text-color: #cbd5e1; /* gray-300 */
+            --heading-color: #ffffff;
+            --entry-bg-color: #000000;
+            --modal-bg-color: rgba(0, 0, 0, 0.8);
+            --modal-date-bg: rgba(0, 0, 0, 0.6);
+            --modal-date-text: #e2e8f0;
+            --button-text: #ffffff;
         }
-        .slideshow-btn:hover { background-color: rgba(0, 0, 0, 0.7); }
-        #prevBtn { left: 1rem; }
-        #nextBtn { right: 1rem; }
-        /* Style for Download button */
-        #downloadBtn {
-            position: absolute;
-            bottom: 1rem;
-            right: 1rem;
-            background-color: rgba(0, 0, 0, 0.4);
-            color: white;
-            padding: 0.4rem 0.8rem;
-            border-radius: 0.3rem;
-            font-size: 0.8rem;
-            text-decoration: none;
-            transition: background-color 0.2s ease;
-             z-index: 60;
+        /* Ljust tema */
+        .light-mode {
+            --bg-color: #f1f5f9; /* gray-100 */
+            --text-color: #1e293b; /* gray-800 */
+            --heading-color: #000000;
+            --entry-bg-color: #f8fafc; /* gray-50 */
+            --modal-bg-color: rgba(255, 255, 255, 0.8);
+            --modal-date-bg: rgba(255, 255, 255, 0.6);
+            --modal-date-text: #1e293b;
+            --button-text: #1e293b;
         }
-         #downloadBtn:hover { background-color: rgba(0, 0, 0, 0.7); }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Times New Roman', Times, serif;
+            font-style: italic;
+            transition: background-color 0.3s ease, color 0.3s ease; /* Mjuk övergång */
+        }
+        .modal{transition:opacity .25s ease; background-color: var(--modal-bg-color);}
+        body.modal-open{overflow:hidden}
+        .modal-img{max-height:90vh;max-width:90vw;display:block;margin:auto}
+        .modal-date{position:absolute;bottom:1rem;left:50%;transform:translateX(-50%);background-color:var(--modal-date-bg);color:var(--modal-date-text);padding:.25rem .75rem;border-radius:.25rem;font-size:.9rem;pointer-events:none}
+        .photo-entry img{transition:transform .2s ease-in-out}
+        .photo-entry { background-color: var(--entry-bg-color); transition: background-color 0.3s ease; }
+        h1 { color: var(--heading-color); transition: color 0.3s ease;}
+        #closeModal, #themeToggle { color: var(--button-text); }
     </style>
 </head>
-<body class="bg-black text-gray-300">
+<body class="text-gray-300">
+
+    <button id="themeToggle" class="fixed top-4 right-4 z-50 bg-gray-700 hover:bg-gray-600 text-xs px-3 py-1 rounded shadow transition-colors">
+        Byt Tema
+    </button>
+
     <div class="container mx-auto px-4 py-8">
-        <h1 class="text-3xl text-center text-white mb-8">2003 – ∞</h1>
+        <h1 class="text-3xl text-center mb-8">2003 – ∞</h1>
         <div id="gallery" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-0">
             {% for image in images %}
-            <div class="photo-entry cursor-pointer overflow-hidden relative bg-black" data-date="{{ image.date }}" data-filename="{{ image.filename }}">
+            <div class="photo-entry group cursor-pointer overflow-hidden relative hover:overflow-visible hover:z-10" data-date="{{ image.date }}">
                 <img src="{{ url_for('static', filename='images/' + image.filename) }}" alt=""
-                     class="w-full h-40 object-contain block"
-                     data-fullsrc="{{ url_for('static', filename='images/' + image.filename) }}">
+                     class="w-full h-40 object-contain block group-hover:scale-125" data-fullsrc="{{ url_for('static', filename='images/' + image.filename) }}">
             </div>
             {% else %}
             <p class="col-span-full text-center text-gray-500">Inga bilder hittades i galleriet.</p>
             {% endfor %}
         </div>
     </div>
-    <div id="imageModal" class="modal fixed inset-0 bg-black bg-opacity-80 flex justify-center items-center p-4 opacity-0 pointer-events-none z-50">
+    <div id="imageModal" class="modal fixed inset-0 flex justify-center items-center p-4 opacity-0 pointer-events-none z-50">
         <div class="relative">
              <img id="modalImage" src="" alt="Förstorad vy" class="modal-img rounded-lg shadow-2xl object-contain">
              <p id="modalDateDisplay" class="modal-date"></p>
-             <a id="downloadBtn" href="#" download>Ladda ner</a>
-        </div>
-        <button id="prevBtn" class="slideshow-btn">&lt;</button>
-        <button id="nextBtn" class="slideshow-btn">&gt;</button>
+             <a id="downloadBtn" href="#" download class="hidden">Ladda ner</a> </div>
+        <button id="prevBtn" class="slideshow-btn hidden">&lt;</button> <button id="nextBtn" class="slideshow-btn hidden">&gt;</button>
         <button id="closeModal" class="absolute top-4 right-4 text-white text-4xl hover:text-gray-400 transition-colors">&times;</button>
     </div>
 
     <script>
-        // Store image data passed from Flask/Jinja2
-        const galleryImages = {{ images|tojson }};
-        let currentImageIndex = -1;
-
         document.addEventListener('DOMContentLoaded',()=>{
             const gallery = document.getElementById('gallery');
             const modal = document.getElementById('imageModal');
@@ -84,51 +84,67 @@
             const prevBtn = document.getElementById('prevBtn');
             const nextBtn = document.getElementById('nextBtn');
             const downloadBtn = document.getElementById('downloadBtn');
+            const themeToggleBtn = document.getElementById('themeToggle');
+            const bodyElement = document.body;
 
-            if (!gallery || !modal || !modalImage || !closeModalBtn || !modalDateDisplay || !prevBtn || !nextBtn || !downloadBtn) {
-                console.error("Gallery or modal elements not found!");
-                return;
+            // --- Theme Toggle Logic ---
+            const currentTheme = localStorage.getItem('theme');
+            if (currentTheme === 'light') {
+                bodyElement.classList.add('light-mode');
+                themeToggleBtn.textContent = 'Mörkt Läge';
+            } else {
+                 themeToggleBtn.textContent = 'Ljust Läge';
             }
 
-            // Function to update modal content
-            function showImage(index) {
-                if (index < 0 || index >= galleryImages.length) {
-                    console.error("Invalid image index:", index);
-                    return;
+            themeToggleBtn.addEventListener('click', () => {
+                bodyElement.classList.toggle('light-mode');
+                let theme = 'dark';
+                if (bodyElement.classList.contains('light-mode')) {
+                    theme = 'light';
+                    themeToggleBtn.textContent = 'Mörkt Läge';
+                } else {
+                     themeToggleBtn.textContent = 'Ljust Läge';
                 }
+                localStorage.setItem('theme', theme);
+            });
+
+            // --- Gallery & Modal Logic ---
+            const galleryImages = {{ images|tojson }};
+            let currentImageIndex = -1;
+
+            if (!gallery || !modal || !modalImage || !closeModalBtn || !modalDateDisplay || !prevBtn || !nextBtn || !downloadBtn) {
+                console.error("Gallery or modal elements not found!"); return;
+            }
+
+            function updateModalButtonsVisibility() {
+                const showButtons = galleryImages.length > 1;
+                prevBtn.classList.toggle('hidden', !showButtons);
+                nextBtn.classList.toggle('hidden', !showButtons);
+                downloadBtn.classList.toggle('hidden', currentImageIndex === -1); // Show download only when image is loaded
+            }
+
+            function showImage(index) {
+                if (index < 0 || index >= galleryImages.length) { return; }
                 currentImageIndex = index;
                 const imageData = galleryImages[index];
                 const imageUrl = "{{ url_for('static', filename='images/') }}" + imageData.filename;
-
                 modalImage.src = imageUrl;
                 modalDateDisplay.textContent = imageData.date || "";
                 downloadBtn.href = imageUrl;
-                // Set suggested download filename (optional, uses original filename)
                 downloadBtn.download = imageData.filename;
+                updateModalButtonsVisibility(); // Update button visibility
             }
 
-            // Function to show the next image
-            function showNextImage() {
-                const nextIndex = (currentImageIndex + 1) % galleryImages.length; // Wrap around
-                showImage(nextIndex);
-            }
+            function showNextImage() { if(galleryImages.length < 2) return; const nextIndex = (currentImageIndex + 1) % galleryImages.length; showImage(nextIndex); }
+            function showPreviousImage() { if(galleryImages.length < 2) return; const prevIndex = (currentImageIndex - 1 + galleryImages.length) % galleryImages.length; showImage(prevIndex); }
 
-            // Function to show the previous image
-            function showPreviousImage() {
-                const prevIndex = (currentImageIndex - 1 + galleryImages.length) % galleryImages.length; // Wrap around
-                showImage(prevIndex);
-            }
-
-            // Open modal when clicking an image in the gallery
             gallery.addEventListener('click', event => {
                 const entry = event.target.closest('.photo-entry');
                 if (entry) {
-                    const filename = entry.dataset.filename;
-                    // Find the index of the clicked image in our data array
+                    const filename = entry.querySelector('img')?.dataset?.fullsrc?.split('/').pop(); // Get filename from fullsrc
                     const index = galleryImages.findIndex(img => img.filename === filename);
-
                     if (index !== -1) {
-                        showImage(index); // Show the clicked image
+                        showImage(index);
                         modal.classList.remove('opacity-0');
                         modal.classList.remove('pointer-events-none');
                         document.body.classList.add('modal-open');
@@ -136,31 +152,29 @@
                 }
             });
 
-            // Function to close the modal
             function hideModal() {
                 modal.classList.add('opacity-0');
                 modal.classList.add('pointer-events-none');
                 document.body.classList.remove('modal-open');
-                setTimeout(() => {
-                    modalImage.src = "";
-                    modalDateDisplay.textContent = "";
-                    downloadBtn.href = "#"; // Reset download link
-                }, 250);
-                currentImageIndex = -1; // Reset index
+                setTimeout(() => { modalImage.src = ""; modalDateDisplay.textContent = ""; downloadBtn.href = "#"; }, 250);
+                currentImageIndex = -1;
+                updateModalButtonsVisibility(); // Hide buttons when modal closes
             }
 
-            // Event listeners for buttons and keys
             closeModalBtn.addEventListener('click', hideModal);
             prevBtn.addEventListener('click', showPreviousImage);
             nextBtn.addEventListener('click', showNextImage);
             modal.addEventListener('click', event => { if (event.target === modal) { hideModal(); } });
             document.addEventListener('keydown', event => {
-                if (!modal.classList.contains('opacity-0')) { // Only act if modal is open
+                if (!modal.classList.contains('opacity-0')) {
                     if (event.key === 'Escape') { hideModal(); }
                     if (event.key === 'ArrowLeft') { showPreviousImage(); }
                     if (event.key === 'ArrowRight') { showNextImage(); }
                 }
             });
+
+            // Initial check for button visibility
+            updateModalButtonsVisibility();
         });
     </script>
 </body>
