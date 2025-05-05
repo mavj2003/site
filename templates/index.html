@@ -1,40 +1,45 @@
-<!DOCTYPE html>
-<html lang="sv">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Albert Vilhelm - Fotogalleri</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        .modal{transition:opacity .25s ease}body.modal-open{overflow:hidden}.modal-img{max-height:90vh;max-width:90vw;display:block;margin:auto}.modal-date{position:absolute;bottom:1rem;left:50%;transform:translateX(-50%);background-color:rgba(0,0,0,.6);color:#e2e8f0;padding:.25rem .75rem;border-radius:.25rem;font-size:.9rem;pointer-events:none}body{font-family:'Times New Roman',Times,serif;font-style:italic}
-        .photo-entry img{transition:transform .2s ease-in-out}
-        .photo-entry { background-color: #000; }
-    </style>
-</head>
-<body class="bg-black text-gray-300">
-    <div class="container mx-auto px-4 py-8">
-        <h1 class="text-3xl text-center text-white mb-8">Riktiga kingar kör albertvilhelm.xyz istället för vsco</h1>
-        <div id="gallery" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-0">
-            {% for image in images %}
-            <div class="photo-entry group cursor-pointer overflow-hidden relative bg-black hover:overflow-visible hover:z-10" data-date="{{ image.date }}">
-                <img src="{{ url_for('static', filename='images/' + image.filename) }}" alt=""
-                     class="w-full h-40 object-contain block group-hover:scale-125"
-                     data-fullsrc="{{ url_for('static', filename='images/' + image.filename) }}">
-            </div>
-            {% else %}
-            <p class="col-span-full text-center text-gray-500">Inga bilder hittades i galleriet.</p>
-            {% endfor %}
-        </div>
-    </div>
-    <div id="imageModal" class="modal fixed inset-0 bg-black bg-opacity-80 flex justify-center items-center p-4 opacity-0 pointer-events-none z-50">
-        <div class="relative">
-             <img id="modalImage" src="" alt="Förstorad vy" class="modal-img rounded-lg shadow-2xl object-contain">
-             <p id="modalDateDisplay" class="modal-date"></p>
-        </div>
-        <button id="closeModal" class="absolute top-4 right-4 text-white text-4xl hover:text-gray-400 transition-colors">&times;</button>
-    </div>
-    <script>
-        document.addEventListener('DOMContentLoaded',()=>{const t=document.getElementById('gallery'),e=document.getElementById('imageModal'),o=document.getElementById('modalImage'),n=document.getElementById('closeModal'),a=document.getElementById('modalDateDisplay');if(!t||!e||!o||!n||!a)return void console.error("Gallery or modal elements not found!");t.addEventListener('click',t=>{const n=t.target.closest('.photo-entry');if(n){const t=n.querySelector('img'),l=n.dataset.date;t&&t.dataset.fullsrc&&(o.src=t.dataset.fullsrc,a.textContent=l||"",e.classList.remove('opacity-0'),e.classList.remove('pointer-events-none'),document.body.classList.add('modal-open'))}});const l=()=>{e.classList.add('opacity-0'),e.classList.add('pointer-events-none'),document.body.classList.remove('modal-open'),setTimeout(()=>{o.src="",a.textContent=""},250)};n.addEventListener('click',l),e.addEventListener('click',t=>{t.target===e&&l()}),document.addEventListener('keydown',t=>{'Escape'===t.key&&!e.classList.contains('opacity-0')&&l()})});
-    </script>
-</body>
-</html>
+import os
+from flask import Flask, render_template, jsonify # Added jsonify
+import re
+
+app = Flask(__name__, static_folder='static', template_folder='templates')
+IMAGE_FOLDER = os.path.join(app.static_folder, 'images')
+ALLOWED_EXTENSIONS = {'.png', '.jpg', '.jpeg', '.gif', '.webp'}
+
+def sort_key_natural(filename):
+    name_part = os.path.splitext(filename)[0]
+    parts = re.split('([0-9]+)', name_part)
+    return [int(part) if part.isdigit() else part.lower() for part in parts]
+
+def get_gallery_images():
+    # Helper function to get sorted image data
+    image_data = []
+    try:
+        all_files = os.listdir(IMAGE_FOLDER)
+        valid_files = [f for f in all_files if os.path.splitext(f)[1].lower() in ALLOWED_EXTENSIONS]
+        valid_files.sort(key=sort_key_natural, reverse=False) # Oldest first
+        for filename in valid_files:
+            date_str = os.path.splitext(filename)[0]
+            image_data.append({'filename': filename, 'date': date_str})
+    except FileNotFoundError:
+        print(f"Error: Image folder not found at {IMAGE_FOLDER}")
+    except Exception as e:
+        print(f"An error occurred: {e}")
+    return image_data
+
+@app.route('/')
+def gallery_page():
+    # Renders the main HTML page
+    images_list = get_gallery_images()
+    return render_template('index.html', images=images_list)
+
+# Optional: An endpoint to get image data as JSON for JavaScript
+# This isn't strictly necessary for the current JS but can be useful
+@app.route('/api/images')
+def gallery_api():
+    images_list = get_gallery_images()
+    return jsonify(images_list)
+
+# Comment out/remove for deployment
+# if __name__ == '__main__':
+#     app.run(debug=True, port=5000)
