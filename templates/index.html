@@ -10,9 +10,9 @@
             --bg-color: #000000;
             --text-color: #cbd5e1;
             --heading-color: #ffffff;
-            --entry-bg-color: #000000;
+            --entry-bg-color: #000000; /* Svart bakgrund i mörkt läge */
             --modal-bg-color: rgba(0, 0, 0, 0.8);
-            --modal-overlay-bg: rgba(0, 0, 0, 0.6); /* Unified background */
+            --modal-overlay-bg: rgba(0, 0, 0, 0.6);
             --modal-overlay-text: #e2e8f0;
             --button-text: #ffffff;
         }
@@ -20,9 +20,9 @@
             --bg-color: #f1f5f9;
             --text-color: #1e293b;
             --heading-color: #000000;
-            --entry-bg-color: #f8fafc;
+            --entry-bg-color: #f1f5f9; /* Samma som sidans bakgrund i ljust läge */
             --modal-bg-color: rgba(255, 255, 255, 0.8);
-            --modal-overlay-bg: rgba(255, 255, 255, 0.6); /* Unified background */
+            --modal-overlay-bg: rgba(255, 255, 255, 0.6);
             --modal-overlay-text: #1e293b;
             --button-text: #1e293b;
         }
@@ -38,10 +38,10 @@
         .modal-img{max-height:85vh;max-width:90vw;display:block;margin:auto}
         .modal-date{
             position:absolute;
-            bottom: 1rem; /* Samma bottenposition som nedladdningsknappen */
+            bottom: 1rem;
             left:50%;
             transform:translateX(-50%);
-            background-color:var(--modal-overlay-bg); /* Använder gemensam variabel */
+            background-color:var(--modal-overlay-bg);
             color:var(--modal-overlay-text);
             padding:.25rem .75rem;
             border-radius:.25rem;
@@ -50,42 +50,41 @@
             z-index: 60;
         }
         .photo-entry img{transition:transform .2s ease-in-out}
+        /* Använder CSS-variabel för bakgrundsfärg */
         .photo-entry { background-color: var(--entry-bg-color); transition: background-color 0.3s ease; }
         h1 { color: var(--heading-color); transition: color 0.3s ease;}
         #closeModal, #themeToggle { color: var(--button-text); }
 
-        /* Justerade stilar för bildspelsknappar */
         .slideshow-btn {
-            position: fixed; /* Positionera relativt viewporten */
+            position: fixed;
             top: 50%;
             transform: translateY(-50%);
             background-color: rgba(0, 0, 0, 0.4);
             color: white;
             border: none;
-            font-size: 2.5rem; /* Lite större */
+            font-size: 2.5rem;
             padding: 0.5rem 1rem;
             cursor: pointer;
             border-radius: 0.3rem;
             transition: background-color 0.2s ease;
-            z-index: 70; /* Högst upp (ovanför modal-bakgrund) */
+            z-index: 70;
         }
         .slideshow-btn:hover { background-color: rgba(0, 0, 0, 0.7); }
-        #prevBtn { left: 2rem; } /* Lite mer indrag från kanten */
-        #nextBtn { right: 2rem; } /* Lite mer indrag från kanten */
+        #prevBtn { left: 2rem; }
+        #nextBtn { right: 2rem; }
 
-        /* Justerad stil för nedladdningsknapp */
         #downloadBtn {
             position: absolute;
-            bottom: 1rem; /* Samma bottenposition som datumet */
-            right: 1rem; /* Placerad i nedre högra hörnet */
-            background-color: var(--modal-overlay-bg); /* Använder gemensam variabel */
+            bottom: 1rem;
+            right: 1rem;
+            background-color: var(--modal-overlay-bg);
             color: var(--modal-overlay-text);
-            padding: 0.4rem 0.8rem; /* Justerad padding för att matcha höjd bättre */
+            padding: 0.4rem 0.8rem;
             border-radius: 0.3rem;
             font-size: 0.8rem;
             text-decoration: none;
             transition: background-color 0.2s ease;
-             z-index: 60; /* Ovanpå bilden */
+             z-index: 60;
         }
          #downloadBtn:hover { background-color: rgba(0, 0, 0, 0.7); }
     </style>
@@ -97,10 +96,10 @@
     </button>
 
     <div class="container mx-auto px-4 py-8">
-        <h1 class="text-3xl text-center mb-8">albertvilhelm.xyz</h1>
+        <h1 class="text-3xl text-center mb-8">2003 – ∞</h1>
         <div id="gallery" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-0">
             {% for image in images %}
-            <div class="photo-entry group cursor-pointer overflow-hidden relative bg-black hover:overflow-visible hover:z-10" data-date="{{ image.date }}" data-filename="{{ image.filename }}">
+            <div class="photo-entry group cursor-pointer overflow-hidden relative hover:overflow-visible hover:z-10" data-date="{{ image.date }}" data-filename="{{ image.filename }}">
                 <img src="{{ url_for('static', filename='images/' + image.filename) }}" alt=""
                      class="w-full h-40 object-contain block group-hover:scale-125"
                      data-fullsrc="{{ url_for('static', filename='images/' + image.filename) }}">
