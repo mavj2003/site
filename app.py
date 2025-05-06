@@ -38,5 +38,5 @@ def gallery_api():
     return jsonify(images_list)
 
 # Kommentera ut/ta bort raderna nedan för deployment till Render
-if __name__ == '__main__':
-     app.run(debug=True, port=5000)
+#if __name__ == '__main__':
+#     app.run(debug=True, port=5000)

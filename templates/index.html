@@ -57,30 +57,24 @@
             pointer-events:none;
             z-index: 60;
         }
-        /* Transition för filter (grayscale) */
         .photo-entry img{transition: filter 0.3s ease-in-out;}
-        /* Gråskaleeffekt vid hover */
         .photo-entry:hover img {
             filter: grayscale(100%);
         }
         .photo-entry { background-color: var(--entry-bg-color); transition: background-color 0.3s ease; }
 
-        /* H1 Styling */
         h1 {
             color: var(--heading-color);
             transition: color 0.3s ease, transform 0.3s ease, text-shadow 0.3s ease;
             display: inline-block;
             cursor: pointer;
-            /* Grundläggande 3D-skugga */
             text-shadow:
                 1px 1px 0 var(--shadow-color-1),
                 2px 2px 0 var(--shadow-color-2),
                 3px 3px 0 var(--shadow-color-3);
         }
-        /* Hover effect for H1 */
         h1:hover {
             transform: scale(1.15);
-             /* Förstärkt 3D-skugga vid hover */
             text-shadow:
                 1px 1px 0 var(--shadow-color-1),
                 2px 2px 0 var(--shadow-color-1),
@@ -174,10 +168,12 @@
             const bodyElement = document.body;
 
             const currentTheme = localStorage.getItem('theme');
+            // Default to dark unless 'light' is explicitly stored
             if (currentTheme === 'light') {
                 bodyElement.classList.add('light-mode');
                 themeToggleBtn.textContent = 'Mörkt Läge';
             } else {
+                 // No need to add 'dark-mode' class, it's the default CSS
                  themeToggleBtn.textContent = 'Ljust Läge';
             }
 
